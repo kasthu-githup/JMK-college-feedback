@@ -35,7 +35,7 @@ function AdminDashboard() {
   const token = localStorage.getItem('jmkAdminToken');
 
   const api = axios.create({
-    baseURL: 'http://localhost:5000/api/admin',
+    baseURL: 'https://jmk-college-feedback.onrender.com',
     headers: {
       Authorization: `Bearer ${token}`
     }

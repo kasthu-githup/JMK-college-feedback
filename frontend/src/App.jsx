@@ -20,7 +20,7 @@ function App() {
     const fetchFeedback = async () => {
       try {
         const response = await axios.get(
-          'http://localhost:5000/api/feedback/approved'
+          'https://jmk-college-feedback.onrender.com/api/feedback/approved'
         );
 
         setFeedbacks(response.data);

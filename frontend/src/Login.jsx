@@ -33,8 +33,8 @@ function Login() {
       setLoading(true);
 
       const endpoint = role === 'student'
-        ? 'http://localhost:5000/api/auth/login'
-        : 'http://localhost:5000/api/admin/login';
+        ? 'https://jmk-college-feedback.onrender.com/api/auth/login'
+        : 'https://jmk-college-feedback.onrender.com/api/admin/login';
 
       const payload = role === 'student'
         ? { email: form.email.trim(), password: form.password }

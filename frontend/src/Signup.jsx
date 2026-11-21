@@ -78,7 +78,7 @@ function Signup() {
       setLoading(true);
 
       const response = await axios.post(
-        'http://localhost:5000/api/auth/signup',
+        'https://jmk-college-feedback.onrender.com/api/auth/signup',
         {
           ...form,
           profileImage

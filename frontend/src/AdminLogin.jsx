@@ -26,7 +26,7 @@ function AdminLogin() {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/admin/login',
+        'https://jmk-college-feedback.onrender.com/api/admin/login',
         {
           username: username.trim(),
           password

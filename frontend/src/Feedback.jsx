@@ -36,7 +36,7 @@ function Feedback() {
     const loadStudent = async () => {
       try {
         const response = await axios.get(
-          'http://localhost:5000/api/auth/me',
+          'https://jmk-college-feedback.onrender.com/api/auth/me',
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -121,7 +121,7 @@ function Feedback() {
       setLoading(true);
 
       const response = await axios.post(
-        'http://localhost:5000/api/feedback',
+        'https://jmk-college-feedback.onrender.com/api/feedback',
         {
           ...form,
           admission_year: Number(form.admission_year),

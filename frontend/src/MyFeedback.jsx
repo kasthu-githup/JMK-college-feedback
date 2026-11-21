@@ -21,7 +21,7 @@ function MyFeedback() {
 
       try {
         const response = await axios.get(
-          'http://localhost:5000/api/feedback/my',
+          'https://jmk-college-feedback.onrender.com/api/feedback/my',
           {
             headers: {
               Authorization: `Bearer ${token}`
