@@ -47,8 +47,8 @@ function AdminDashboard() {
       setError('');
 
       const [statsResponse, feedbackResponse] = await Promise.all([
-        api.get('/dashboard'),
-        api.get('/feedback')
+       	api.get('/api/admin/dashboard'),
+        api.get('/api/admin/feedback')
       ]);
 
       setStats(statsResponse.data);
@@ -82,7 +82,7 @@ function AdminDashboard() {
 
   const updateStatus = async (id, status) => {
     try {
-      await api.patch(`/feedback/${id}/status`, { status });
+      await api.patch(`/api/admin/feedback/${id}/status`, { status });
       await loadDashboard();
     } catch (err) {
       alert(
@@ -99,7 +99,7 @@ function AdminDashboard() {
     if (!confirmDelete) return;
 
     try {
-      await api.delete(`/feedback/${id}`);
+     await api.delete(`/api/admin/feedback/${id}`);
       alert('Feedback deleted successfully!');
       await loadDashboard();
     } catch (err) {
