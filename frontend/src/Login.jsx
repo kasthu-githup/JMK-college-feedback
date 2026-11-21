@@ -8,7 +8,9 @@ import {
   Lock,
   User,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import './Auth.css';
 
@@ -24,6 +26,7 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,6 +76,7 @@ function Login() {
   const handleRoleChange = (nextRole) => {
     setRole(nextRole);
     setForm({ email: '', username: '', password: '' });
+    setShowPassword(false);
     setMessage('');
   };
 
@@ -165,8 +169,9 @@ function Login() {
 
           <div className="auth-input">
             <Lock size={18} />
+
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={form.password}
               onChange={(e) => setForm({
@@ -175,6 +180,27 @@ function Login() {
               })}
               required
             />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 5,
+                color: '#174A7B',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {showPassword
+                ? <EyeOff size={20} />
+                : <Eye size={20} />
+              }
+            </button>
           </div>
 
           <button type="submit" disabled={loading}>

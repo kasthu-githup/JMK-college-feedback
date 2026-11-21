@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Send, Star, Camera } from 'lucide-react';
+import { ArrowLeft, Send, Star, Camera, CheckCircle } from 'lucide-react';
 
 function Feedback() {
   const navigate = useNavigate();
@@ -12,6 +12,33 @@ function Feedback() {
   const [newPhoto, setNewPhoto] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!success) return;
+
+    const colors = ['#FF8045', '#159E9D', '#174F80', '#FFD166', '#E879F9'];
+
+    const pieces = Array.from({ length: 90 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 2.5 + Math.random() * 2,
+      color: colors[i % colors.length],
+      rotation: Math.random() * 360
+    }));
+
+    setConfetti(pieces);
+
+    const timer = setTimeout(() => {
+      setSuccess(false);
+      setConfetti([]);
+    }, 5500);
+
+    return () => clearTimeout(timer);
+  }, [success]);
+
+  const [confetti, setConfetti] = useState([]);
 
   const [form, setForm] = useState({
     college_name: '',
@@ -44,9 +71,7 @@ function Feedback() {
           }
         );
 
-        const studentData =
-          response.data.student || response.data;
-
+        const studentData = response.data.student || response.data;
         setSelectedImage(studentData.profile_image || '');
       } catch (error) {
         console.error('Student profile loading error:', error);
@@ -66,17 +91,12 @@ function Feedback() {
     });
   };
 
-  // PHOTO UPLOAD
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp'
-    ];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
     if (!allowedTypes.includes(file.type)) {
       setMessage('Please select JPG, PNG or WEBP image.');
@@ -105,7 +125,6 @@ function Feedback() {
     reader.readAsDataURL(file);
   };
 
-  // SUBMIT FEEDBACK
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -139,10 +158,10 @@ function Feedback() {
       );
 
       setMessage(
-        response.data.message ||
-        'Feedback submitted successfully.'
+        response.data.message || 'Feedback submitted successfully.'
       );
 
+      setSuccess(true);
       setNewPhoto('');
 
       setForm({
@@ -159,8 +178,7 @@ function Feedback() {
 
     } catch (error) {
       setMessage(
-        error.response?.data?.message ||
-        'Unable to submit feedback'
+        error.response?.data?.message || 'Unable to submit feedback'
       );
     } finally {
       setLoading(false);
@@ -175,15 +193,66 @@ function Feedback() {
   ];
 
   if (profileLoading) {
-    return (
-      <div style={centerStyle}>
-        Loading student profile...
-      </div>
-    );
+    return <div style={centerStyle}>Loading student profile...</div>;
   }
 
   return (
     <div style={pageStyle}>
+
+      {success && (
+        <>
+          <style>
+            {`
+              @keyframes confettiFall {
+                0% {
+                  transform: translateY(-10vh) rotate(0deg);
+                  opacity: 1;
+                }
+                100% {
+                  transform: translateY(110vh) rotate(720deg);
+                  opacity: 0;
+                }
+              }
+              @keyframes successPop {
+                0% { transform: scale(0.5); opacity: 0; }
+                70% { transform: scale(1.08); opacity: 1; }
+                100% { transform: scale(1); opacity: 1; }
+              }
+            `}
+          </style>
+
+          <div style={confettiLayerStyle}>
+            {confetti.map((piece) => (
+              <span
+                key={piece.id}
+                style={{
+                  position: 'absolute',
+                  left: `${piece.left}%`,
+                  top: '-20px',
+                  width: '10px',
+                  height: '15px',
+                  background: piece.color,
+                  borderRadius: '2px',
+                  transform: `rotate(${piece.rotation}deg)`,
+                  animation: `confettiFall ${piece.duration}s ${piece.delay}s linear forwards`
+                }}
+              />
+            ))}
+          </div>
+
+          <div style={successPopupStyle}>
+            <CheckCircle size={48} color="#159E9D" />
+            <h2 style={{ color: '#174F80', margin: '12px 0 5px' }}>
+              Thank You!
+            </h2>
+            <p style={{ color: '#64748B', margin: 0 }}>
+              Your feedback has been submitted successfully.
+            </p>
+            <div style={{ fontSize: 26, marginTop: 12 }}>🎉 🎊 ✨</div>
+          </div>
+        </>
+      )}
+
       <div style={containerStyle}>
 
         <button
@@ -194,23 +263,18 @@ function Feedback() {
           Back to Dashboard
         </button>
 
-        <h1 style={headingStyle}>
-          Student Feedback Form
-        </h1>
+        <h1 style={headingStyle}>Student Feedback Form</h1>
 
         <p style={subtitleStyle}>
           Share your college admission experience with us.
         </p>
 
         {message && (
-          <p style={messageStyle}>
-            {message}
-          </p>
+          <p style={messageStyle}>{message}</p>
         )}
 
         <form onSubmit={handleSubmit}>
 
-          {/* PHOTO UPLOAD */}
           <label style={labelStyle}>
             <Camera size={17} />
             Upload Student Photo
@@ -227,7 +291,6 @@ function Feedback() {
             JPG, PNG or WEBP. Maximum size: 1.8 MB.
           </small>
 
-          {/* ONLY ONE PHOTO PREVIEW */}
           {selectedImage && (
             <div style={previewBoxStyle}>
               <img
@@ -235,17 +298,13 @@ function Feedback() {
                 alt="Student photo preview"
                 style={photoStyle}
               />
-
               <span style={{ color: '#159E9D', fontWeight: '600' }}>
                 Photo Preview
               </span>
             </div>
           )}
 
-          <label style={labelStyle}>
-            College Name *
-          </label>
-
+          <label style={labelStyle}>College Name *</label>
           <input
             style={inputStyle}
             name="college_name"
@@ -255,10 +314,7 @@ function Feedback() {
             required
           />
 
-          <label style={labelStyle}>
-            Department / Course *
-          </label>
-
+          <label style={labelStyle}>Department / Course *</label>
           <input
             style={inputStyle}
             name="department"
@@ -268,10 +324,7 @@ function Feedback() {
             required
           />
 
-          <label style={labelStyle}>
-            Admission Year *
-          </label>
-
+          <label style={labelStyle}>Admission Year *</label>
           <input
             style={inputStyle}
             type="number"
@@ -284,10 +337,7 @@ function Feedback() {
             required
           />
 
-          <label style={labelStyle}>
-            Admission Agent Name *
-          </label>
-
+          <label style={labelStyle}>Admission Agent Name *</label>
           <input
             style={inputStyle}
             name="agent_name"
@@ -297,15 +347,11 @@ function Feedback() {
             required
           />
 
-          <h3 style={sectionHeadingStyle}>
-            Rate Your Experience
-          </h3>
+          <h3 style={sectionHeadingStyle}>Rate Your Experience</h3>
 
           {fields.map(([name, label]) => (
             <div key={name} style={{ marginBottom: '18px' }}>
-              <label style={labelStyle}>
-                {label}
-              </label>
+              <label style={labelStyle}>{label}</label>
 
               <div style={ratingRowStyle}>
                 <Star size={19} color="#FF8045" />
@@ -326,10 +372,7 @@ function Feedback() {
             </div>
           ))}
 
-          <label style={labelStyle}>
-            Your Written Feedback *
-          </label>
-
+          <label style={labelStyle}>Your Written Feedback *</label>
           <textarea
             style={textareaStyle}
             name="review"
@@ -390,9 +433,7 @@ const headingStyle = {
   marginTop: '25px'
 };
 
-const subtitleStyle = {
-  color: '#64748B'
-};
+const subtitleStyle = { color: '#64748B' };
 
 const photoStyle = {
   width: '80px',
@@ -477,6 +518,29 @@ const ratingRowStyle = {
   display: 'flex',
   alignItems: 'center',
   gap: '12px'
+};
+
+const confettiLayerStyle = {
+  position: 'fixed',
+  inset: 0,
+  pointerEvents: 'none',
+  overflow: 'hidden',
+  zIndex: 1000
+};
+
+const successPopupStyle = {
+  position: 'fixed',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  animation: 'successPop 0.5s ease-out',
+  background: '#FFFFFF',
+  padding: '28px',
+  borderRadius: '18px',
+  boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+  textAlign: 'center',
+  width: 'min(330px, 80vw)',
+  zIndex: 1001
 };
 
 export default Feedback;
