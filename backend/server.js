@@ -6,8 +6,13 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173'
+  origin: [
+    'http://localhost:5173',
+    'https://jmk-college-feedback-web.vercel.app'
+  ]
 }));
+
+
 
 app.use(express.json({ limit: '2mb' }));
 
