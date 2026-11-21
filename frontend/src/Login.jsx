@@ -10,7 +10,7 @@ import {
   ArrowRight,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeClosed
 } from 'lucide-react';
 import './Auth.css';
 
@@ -80,6 +80,14 @@ function Login() {
     setMessage('');
   };
 
+  const smallIconStyle = {
+    width: 16,
+    height: 16,
+    minWidth: 16,
+    color: '#718096',
+    strokeWidth: 1.8
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -139,7 +147,7 @@ function Login() {
 
           {role === 'student' ? (
             <div className="auth-input">
-              <Mail size={18} />
+              <Mail style={smallIconStyle} />
               <input
                 type="email"
                 placeholder="Student Email Address"
@@ -153,7 +161,7 @@ function Login() {
             </div>
           ) : (
             <div className="auth-input">
-              <User size={18} />
+              <User style={smallIconStyle} />
               <input
                 type="text"
                 placeholder="Admin Username"
@@ -168,7 +176,7 @@ function Login() {
           )}
 
           <div className="auth-input">
-            <Lock size={18} />
+            <Lock style={smallIconStyle} />
 
             <input
               type={showPassword ? 'text' : 'password'}
@@ -186,19 +194,23 @@ function Login() {
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               style={{
-                background: 'transparent',
+                background: 'none',
                 border: 'none',
-                padding: 5,
-                color: '#174A7B',
+                outline: 'none',
+                boxShadow: 'none',
+                padding: '4px',
+                margin: 0,
+                color: '#718096',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                minWidth: 'auto'
               }}
             >
               {showPassword
-                ? <EyeOff size={20} />
-                : <Eye size={20} />
+                ? <Eye size={17} strokeWidth={1.8} />
+                : <EyeClosed size={17} strokeWidth={1.8} />
               }
             </button>
           </div>
