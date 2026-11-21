@@ -195,3 +195,32 @@
   outline: none !important;
   box-shadow: none !important;
 }
+/* Signup all icons same size */
+.auth-input > svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  flex-shrink: 0;
+}
+
+/* Password eye icon */
+.auth-input .password-toggle {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: none !important;
+  background: transparent !important;
+  color: #174F80 !important;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.auth-input .password-toggle svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block;
+}
