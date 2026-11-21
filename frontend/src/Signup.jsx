@@ -9,7 +9,9 @@ import {
   Lock,
   Phone,
   ArrowRight,
-  Camera
+  Camera,
+  Eye,
+  EyeClosed
 } from 'lucide-react';
 import './Auth.css';
 
@@ -27,6 +29,9 @@ function Signup() {
   const [profileImage, setProfileImage] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm({
@@ -195,29 +200,47 @@ function Signup() {
             />
           </div>
 
+          {/* Password */}
           <div className="auth-input">
             <Lock size={18} />
             <input
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password (minimum 8 characters)"
               value={form.password}
               onChange={handleChange}
               minLength={8}
               required
             />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label="Toggle password visibility"
+            >
+              {showPassword ? <Eye size={16} /> : <EyeClosed size={16} />}
+            </button>
           </div>
 
+          {/* Confirm Password */}
           <div className="auth-input">
             <Lock size={18} />
             <input
               name="confirmPassword"
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               placeholder="Confirm Password"
               value={form.confirmPassword}
               onChange={handleChange}
               required
             />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label="Toggle confirm password visibility"
+            >
+              {showConfirmPassword ? <Eye size={16} /> : <EyeClosed size={16} />}
+            </button>
           </div>
 
           <button type="submit" disabled={loading}>

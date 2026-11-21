@@ -154,3 +154,44 @@
     font-size: 25px;
   }
 }
+.auth-input,
+.auth-input:focus,
+.auth-input:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.auth-input input,
+.auth-input input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* Remove input focus border and box */
+.auth-input:focus,
+.auth-input:focus-within {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.auth-input input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Password eye button */
+.password-toggle {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.password-toggle:focus,
+.password-toggle:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
