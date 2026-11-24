@@ -14,14 +14,29 @@ function Router() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* HOME */}
         <Route path="/" element={<App />} />
+
+        {/* AUTHENTICATION */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* STUDENT DASHBOARD */}
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/submit-feedback" element={<Feedback />} />
         <Route path="/my-feedback" element={<MyFeedback />} />
+
+        {/* FEEDBACK CATEGORIES */}
+        <Route path="/submit-feedback" element={<Feedback />} />
+        <Route path="/college-feedback" element={<Feedback />} />
+        <Route path="/internship-job-feedback" element={<Feedback />} />
+        <Route path="/projects-feedback" element={<Feedback />} />
+
+        {/* ADMIN */}
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
+        {/* FALLBACK */}
+        <Route path="*" element={<App />} />
       </Routes>
     </BrowserRouter>
   );

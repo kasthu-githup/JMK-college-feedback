@@ -56,7 +56,7 @@ function AdminLogin() {
 
         <Link to="/" className="admin-brand">
           <GraduationCap size={27} />
-          <span>JMK <small>EDUCATION CENTER</small></span>
+          <span>JMK <small>STUDENT SERVICE HUB</small></span>
         </Link>
 
         <div className="admin-shield">

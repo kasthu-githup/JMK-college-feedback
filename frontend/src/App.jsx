@@ -4,71 +4,108 @@ import axios from 'axios';
 import {
   GraduationCap, Star, Users, Building2,
   MessageSquare, Search, Menu, X, ArrowRight,
-  ShieldCheck, BookOpen, LogIn
+  ShieldCheck, LogIn, BriefcaseBusiness, FolderKanban
 } from 'lucide-react';
 import './App.css';
+
+const API = 'http://localhost:5000';
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [feedbacks, setFeedbacks] = useState([]);
+  const [collegeFeedbacks, setCollegeFeedbacks] = useState([]);
+  const [internshipFeedbacks, setInternshipFeedbacks] = useState([]);
+  const [projectFeedbacks, setProjectFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Load approved feedback from backend
   useEffect(() => {
-    const fetchFeedback = async () => {
+    const fetchAllFeedback = async () => {
       try {
-        const response = await axios.get(
-          'https://jmk-college-feedback.onrender.com/api/feedback/approved'
-        );
+        const [college, internship, projects] = await Promise.all([
+          axios.get(`${API}/api/feedback/approved`),
+          axios.get(`${API}/api/internship/public`),
+          axios.get(`${API}/api/projects/public`)
+        ]);
 
-        setFeedbacks(response.data);
+        setCollegeFeedbacks(college.data);
+        setInternshipFeedbacks(internship.data);
+        setProjectFeedbacks(projects.data);
+        setError('');
       } catch (err) {
         console.error('Feedback loading error:', err);
-        setError('Unable to load student feedback.');
+        setError('Unable to load feedback. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFeedback();
+    fetchAllFeedback();
   }, []);
 
-  const collegesCount = new Set(
-    feedbacks.map(item => item.college_name?.toLowerCase())
-  ).size;
+  const allFeedbacks = [
+    ...collegeFeedbacks,
+    ...internshipFeedbacks,
+    ...projectFeedbacks
+  ];
 
-  const agentsCount = new Set(
-    feedbacks.map(item => item.agent_name?.toLowerCase())
-  ).size;
-
-  const averageRating = feedbacks.length
+  const averageRating = allFeedbacks.length
     ? (
-        feedbacks.reduce(
-          (total, item) => total + Number(item.overall_rating),
+        allFeedbacks.reduce(
+          (total, item) => total + Number(item.overall_rating || 0),
           0
-        ) / feedbacks.length
+        ) / allFeedbacks.length
       ).toFixed(1)
     : '--';
-
-  const filteredFeedbacks = feedbacks.filter(item => {
-    const query = search.toLowerCase();
-
-    return (
-      item.college_name?.toLowerCase().includes(query) ||
-      item.agent_name?.toLowerCase().includes(query) ||
-      item.student_name?.toLowerCase().includes(query) ||
-      item.department?.toLowerCase().includes(query)
-    );
-  });
 
   const navLinks = [
     { name: 'Home', href: '#home' },
     { name: 'About', href: '#about' },
-    { name: 'Feedback', href: '#feedback' },
+    { name: 'College Feedback', href: '#college-feedback' },
+    { name: 'Internship & Job Feedback', href: '#internship-feedback' },
+    { name: 'Projects Work Feedback', href: '#project-feedback' },
     { name: 'Contact', href: '#contact' }
   ];
+
+  const filterItems = (items, fields) => {
+    const query = search.toLowerCase().trim();
+    if (!query) return items;
+
+    return items.filter(item =>
+      fields.some(field =>
+        String(item[field] || '').toLowerCase().includes(query)
+      ) ||
+      String(item.student_name || '').toLowerCase().includes(query)
+    );
+  };
+
+  const renderRating = rating => {
+    const value = Math.max(0, Math.min(5, Number(rating) || 0));
+
+    return (
+      <div className="visual-stars">
+        {'★'.repeat(value)}
+        {'☆'.repeat(5 - value)}
+      </div>
+    );
+  };
+
+  const renderEmpty = title => (
+    <div className="empty-state">
+      <MessageSquare size={40} />
+      <h3>{title}</h3>
+      <p>Be the first student to share your experience!</p>
+      <a href="/signup" className="primary-btn">
+        Share Your Experience <ArrowRight size={17} />
+      </a>
+    </div>
+  );
+
+  const renderStudent = item => (
+    <div className="review-avatar">
+      {item.student_name?.charAt(0)?.toUpperCase() || 'S'}
+    </div>
+  );
 
   return (
     <div className="app">
@@ -79,7 +116,7 @@ function App() {
           <img src="/jmk-logo.png" alt="JMK Logo" />
           <div>
             <h2>JMK</h2>
-            <span>EDUCATION CENTER</span>
+            <span>STUDENT SERVICE HUB</span>
           </div>
         </a>
 
@@ -113,7 +150,7 @@ function App() {
         <div className="hero-content">
           <span className="hero-tag">
             <GraduationCap size={18} />
-            YOUR EDUCATION JOURNEY STARTS HERE
+            YOUR VOICE. YOUR EXPERIENCE. YOUR CAMPUS.
           </span>
 
           <h1>
@@ -123,13 +160,13 @@ function App() {
           </h1>
 
           <p>
-            Explore genuine student experiences, college admission
-            journeys and agent reviews. Make your college decision
-            with confidence.
+            Explore genuine student experiences about colleges,
+            internships, jobs and project work. Make confident
+            decisions through real student feedback.
           </p>
 
           <div className="hero-buttons">
-            <a href="#feedback" className="primary-btn">
+            <a href="#college-feedback" className="primary-btn">
               Explore Feedback <ArrowRight size={18} />
             </a>
 
@@ -140,27 +177,13 @@ function App() {
 
           <div className="trust-note">
             <ShieldCheck size={19} />
-            Real experiences from registered students
+            Experiences shared by registered students
           </div>
         </div>
 
         <div className="hero-visual">
-          <div className="visual-card">
-            <div className="visual-icon">
-              <GraduationCap size={65} />
-            </div>
-            <h2>Build Your Future</h2>
-            <p>Choose your college with confidence.</p>
-            <div className="visual-stars">★★★★★</div>
-            <span>Student Experience Platform</span>
-          </div>
-
-          <div className="floating-icon icon-one">
-            <BookOpen size={25} />
-          </div>
-
-          <div className="floating-icon icon-two">
-            <Star size={25} />
+          <div className="future-image">
+            <img src="/student-boy.png" alt="Student holding books" />
           </div>
         </div>
       </section>
@@ -169,20 +192,20 @@ function App() {
       <section className="stats-section">
         <div className="stat-card">
           <Users />
-          <h2>{feedbacks.length}</h2>
-          <p>Student Reviews</p>
+          <h2>{allFeedbacks.length}</h2>
+          <p>Total Reviews</p>
         </div>
 
         <div className="stat-card">
           <Building2 />
-          <h2>{collegesCount}</h2>
-          <p>Colleges Reviewed</p>
+          <h2>{collegeFeedbacks.length}</h2>
+          <p>College Reviews</p>
         </div>
 
         <div className="stat-card">
-          <MessageSquare />
-          <h2>{agentsCount}</h2>
-          <p>Admission Agents</p>
+          <BriefcaseBusiness />
+          <h2>{internshipFeedbacks.length}</h2>
+          <p>Internship & Job Reviews</p>
         </div>
 
         <div className="stat-card">
@@ -196,11 +219,11 @@ function App() {
       <section className="about-section" id="about">
         <div className="section-heading">
           <span>ABOUT OUR PLATFORM</span>
-          <h2>Making College Admission Decisions Easier</h2>
+          <h2>One Platform. Three Experiences.</h2>
           <p>
-            JMK Education Center provides a platform for students
-            to share their college admission experiences and help
-            other students make informed decisions.
+            JMK Student Service Hub helps students share their
+            experiences about college admissions, internships,
+            jobs and academic projects.
           </p>
         </div>
 
@@ -208,144 +231,255 @@ function App() {
           <div className="about-card">
             <Users size={30} />
             <h3>Student Experiences</h3>
-            <p>Discover experiences shared by students.</p>
+            <p>Discover experiences shared by other students.</p>
           </div>
 
           <div className="about-card">
             <Star size={30} />
             <h3>Honest Reviews</h3>
-            <p>Read ratings and feedback about admission support.</p>
+            <p>Explore ratings and written feedback.</p>
           </div>
 
           <div className="about-card">
             <ShieldCheck size={30} />
-            <h3>Trusted Platform</h3>
-            <p>Feedback is reviewed before public publishing.</p>
+            <h3>Instant Feedback</h3>
+            <p>New submissions appear in the feedback sections.</p>
           </div>
         </div>
       </section>
 
-      {/* PUBLIC FEEDBACK */}
-      <section className="feedback-section" id="feedback">
-        <div className="section-heading">
-          <span>STUDENT REVIEWS</span>
-          <h2>Student Feedback & Experiences</h2>
-          <p>
-            Explore college admission experiences shared by students.
-          </p>
-        </div>
+      {/* SAME BOOK BACKGROUND START */}
+      <div className="book-background-area">
 
-        <div className="search-box">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder="Search college, student, department or agent..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        {/* CATEGORY CARDS */}
+        <section className="feedback-categories-section">
+          <div className="section-heading">
+            <span>EXPLORE CATEGORIES</span>
+            <h2>Choose Your Feedback Category</h2>
+            <p>Select a category to explore student experiences.</p>
+          </div>
 
-        <div className="feedback-grid">
+          <div className="about-grid">
+            <a href="#college-feedback" className="about-card category-pop-card">
+              <GraduationCap size={38} />
+              <h3>College Feedback</h3>
+              <p>College admission, departments and student experiences.</p>
+              <strong>Explore Reviews →</strong>
+            </a>
 
-          {loading ? (
-            <div className="empty-state">
-              <p>Loading student feedback...</p>
-            </div>
-          ) : error ? (
-            <div className="empty-state">
-              <MessageSquare size={45} />
-              <h3>Feedback unavailable</h3>
-              <p>{error}</p>
-            </div>
-          ) : filteredFeedbacks.length === 0 ? (
-            <div className="empty-state">
-              <MessageSquare size={45} />
-              <h3>
-                {feedbacks.length === 0
-                  ? 'No Feedback Published Yet'
-                  : 'No Matching Feedback Found'}
-              </h3>
-              <p>
-                {feedbacks.length === 0
-                  ? 'Student reviews will appear here after admin approval.'
-                  : 'Try searching with another name or college.'}
-              </p>
+            <a href="#internship-feedback" className="about-card category-pop-card">
+              <BriefcaseBusiness size={38} />
+              <h3>Internship & Job Feedback</h3>
+              <p>Company, job role and internship experiences.</p>
+              <strong>Explore Reviews →</strong>
+            </a>
 
-              {feedbacks.length === 0 && (
-                <a href="/signup" className="primary-btn">
-                  Submit Your Feedback <ArrowRight size={17} />
-                </a>
-              )}
-            </div>
-          ) : (
-            filteredFeedbacks.map(item => (
-              <div className="review-card" key={item.id}>
+            <a href="#project-feedback" className="about-card category-pop-card">
+              <FolderKanban size={38} />
+              <h3>Projects Work Feedback</h3>
+              <p>Academic projects, technologies and guide experiences.</p>
+              <strong>Explore Reviews →</strong>
+            </a>
+          </div>
+        </section>
 
-                {item.profile_image ? (
-                  <img
-  className="student-photo"
-  src={item.profile_image}
-  alt={item.student_name}
-/>
-                ) : (
-                  <div className="review-avatar">
-                    {item.student_name?.charAt(0)?.toUpperCase()}
-                  </div>
-                )}
+        {/* SEARCH */}
+        <section className="feedback-section">
+          <div className="section-heading">
+            <span>SEARCH EXPERIENCES</span>
+            <h2>Find Student Reviews</h2>
+          </div>
 
-                <h3>{item.student_name}</h3>
+          <div className="search-box">
+            <Search size={20} />
+            <input
+              type="text"
+              placeholder="Search student, college, company or project..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+        </section>
 
-                <p>{item.college_name}</p>
+        {/* COLLEGE FEEDBACK */}
+        <section className="feedback-section" id="college-feedback">
+          <div className="section-heading">
+            <span>COLLEGE EXPERIENCES</span>
+            <h2>College Feedback</h2>
+            <p>College admissions and student experiences.</p>
+            <a href="/submit-feedback" className="primary-btn">
+              Submit College Feedback <ArrowRight size={17} />
+            </a>
+          </div>
 
-                <p>
-                  <strong>Department:</strong> {item.department}
-                </p>
+          <div className="feedback-grid">
+            {loading ? (
+              <div className="empty-state">Loading college feedback...</div>
+            ) : error ? (
+              <div className="empty-state">{error}</div>
+            ) : filterItems(collegeFeedbacks, [
+              'college_name', 'department', 'agent_name'
+            ]).length === 0 ? (
+              renderEmpty('No College Feedback Yet')
+            ) : (
+              filterItems(collegeFeedbacks, [
+                'college_name', 'department', 'agent_name'
+              ]).map(item => (
+                <div className="review-card" key={item.id}>
+                  {item.profile_image ? (
+                    <img
+                      className="student-photo"
+                      src={item.profile_image}
+                      alt={item.student_name || 'Student'}
+                    />
+                  ) : renderStudent(item)}
 
-                <p>
-                  <strong>Admission Year:</strong> {item.admission_year}
-                </p>
+                  <h3>{item.student_name}</h3>
+                  <p>{item.college_name}</p>
+                  <p><strong>Department:</strong> {item.department}</p>
+                  <p><strong>Admission Year:</strong> {item.admission_year}</p>
+                  <p><strong>Agent:</strong> {item.agent_name}</p>
+                  {renderRating(item.overall_rating)}
+                  <p>{item.review}</p>
 
-                <p>
-                  <strong>Agent:</strong> {item.agent_name}
-                </p>
-
-                <div className="visual-stars">
-                  {'★'.repeat(Number(item.overall_rating))}
-                  {'☆'.repeat(5 - Number(item.overall_rating))}
+                  {item.video_url && (
+                    <video controls width="100%" src={item.video_url} />
+                  )}
                 </div>
+              ))
+            )}
+          </div>
+        </section>
 
-                <p>{item.review}</p>
+        {/* INTERNSHIP FEEDBACK */}
+        <section className="feedback-section" id="internship-feedback">
+          <div className="section-heading">
+            <span>CAREER EXPERIENCES</span>
+            <h2>Internship & Job Feedback</h2>
+            <p>
+              Read real experiences about companies and job opportunities.
+            </p>
+            <a href="/internship-job-feedback" className="primary-btn">
+              Submit Internship / Job Feedback <ArrowRight size={17} />
+            </a>
+          </div>
+
+          <div className="feedback-grid">
+            {loading ? (
+              <div className="empty-state">Loading internship feedback...</div>
+            ) : error ? (
+              <div className="empty-state">{error}</div>
+            ) : filterItems(internshipFeedbacks, [
+              'company_name', 'job_role', 'duration'
+            ]).length === 0 ? (
+              renderEmpty('No Internship or Job Feedback Yet')
+            ) : (
+              filterItems(internshipFeedbacks, [
+                'company_name', 'job_role', 'duration'
+              ]).map(item => (
+                <div className="review-card" key={item.id}>
+                  {renderStudent(item)}
+                  <h3>{item.student_name}</h3>
+                  <p><strong>Company:</strong> {item.company_name}</p>
+                  <p><strong>Role:</strong> {item.job_role || 'Not specified'}</p>
+                  <p><strong>Duration:</strong> {item.duration || 'Not specified'}</p>
+                  <p><strong>Stipend:</strong> {item.stipend || 'Not specified'}</p>
+                  {renderRating(item.overall_rating)}
+                  <p>{item.review}</p>
+
+                  {item.video_url && (
+                    <video controls width="100%" src={item.video_url} />
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* PROJECT FEEDBACK */}
+        <section className="feedback-section" id="project-feedback">
+          <div className="section-heading">
+            <span>PROJECT EXPERIENCES</span>
+            <h2>Projects Work Feedback</h2>
+            <p>
+              Explore student project work and learning experiences.
+            </p>
+            <a href="/projects-feedback" className="primary-btn">
+              Submit Project Feedback <ArrowRight size={17} />
+            </a>
+          </div>
+
+          <div className="feedback-grid">
+            {loading ? (
+              <div className="empty-state">Loading project feedback...</div>
+            ) : error ? (
+              <div className="empty-state">{error}</div>
+            ) : filterItems(projectFeedbacks, [
+              'project_title', 'domain', 'technologies', 'guide_name'
+            ]).length === 0 ? (
+              renderEmpty('No Project Feedback Yet')
+            ) : (
+              filterItems(projectFeedbacks, [
+                'project_title', 'domain', 'technologies', 'guide_name'
+              ]).map(item => (
+                <div className="review-card" key={item.id}>
+                  {renderStudent(item)}
+                  <h3>{item.student_name}</h3>
+                  <p><strong>Project:</strong> {item.project_title}</p>
+                  <p><strong>Domain:</strong> {item.domain || 'Not specified'}</p>
+                  <p><strong>Technologies:</strong> {item.technologies || 'Not specified'}</p>
+                  <p><strong>Guide:</strong> {item.guide_name || 'Not specified'}</p>
+                  {renderRating(item.overall_rating)}
+                  <p>{item.review}</p>
+
+                  {item.video_url && (
+                    <video controls width="100%" src={item.video_url} />
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* CONTACT */}
+        <section className="jmk-contact-section" id="contact">
+          <div className="jmk-contact-heading">
+            <span className="jmk-contact-tag">GET IN TOUCH</span>
+            <h2>Let's Connect!</h2>
+            <p>Have questions? We're here to help you.</p>
+          </div>
+
+          <div className="jmk-contact-card">
+            <div className="jmk-contact-info">
+              <div className="jmk-contact-icon">📞</div>
+
+              <div>
+                <h3>Call Us</h3>
+                <a href="tel:+919578755237">+91 9578755237</a>
+                <p>Available for enquiries</p>
               </div>
-            ))
-          )}
+            </div>
 
-        </div>
-      </section>
+            <div className="jmk-contact-buttons">
+              <a href="tel:+919578755237" className="jmk-call-btn">
+                📞 Call Now
+              </a>
+            </div>
+          </div>
+        </section>
 
-      {/* CONTACT */}
-      <section className="contact-section" id="contact">
-        <h2>Start Your College Journey With Confidence</h2>
-        <p>
-          Explore student experiences and share your own story.
-        </p>
-
-        <a href="/signup" className="primary-btn">
-          Join Our Platform <ArrowRight size={18} />
-        </a>
-      </section>
+      </div>
+      {/* SAME BOOK BACKGROUND END */}
 
       {/* FOOTER */}
       <footer className="footer">
         <div className="footer-brand">
           <img src="/jmk-logo.png" alt="JMK Logo" />
-          <h3>JMK Education Center</h3>
+          <h3>JMK Student Service Hub</h3>
         </div>
 
-        <p>
-          Connecting Students With Real Admission Experiences.
-        </p>
-
-        <p>© 2026 JMK Education Center. All Rights Reserved.</p>
+        <p>Connecting Students With Real Experiences.</p>
+        <p>© 2026 JMK Student Service Hub. All Rights Reserved.</p>
       </footer>
 
     </div>

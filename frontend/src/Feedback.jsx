@@ -1,56 +1,60 @@
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Send, Star, Camera, CheckCircle } from 'lucide-react';
+import {
+  ArrowLeft, Send, Star, Camera, CheckCircle,
+  Video, GraduationCap, BriefcaseBusiness, FolderKanban
+} from 'lucide-react';
+
+const API = 'http://localhost:5000';
 
 function Feedback() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const path = location.pathname;
+
+  const category = path === '/internship-job-feedback'
+    ? 'internship'
+    : path === '/projects-feedback'
+      ? 'project'
+      : 'college';
 
   const [profileLoading, setProfileLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState('');
-  const [newPhoto, setNewPhoto] = useState('');
+  const [newPhoto, setNewPhoto] = useState(null);
+  const [video, setVideo] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!success) return;
-
-    const colors = ['#FF8045', '#159E9D', '#174F80', '#FFD166', '#E879F9'];
-
-    const pieces = Array.from({ length: 90 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: 2.5 + Math.random() * 2,
-      color: colors[i % colors.length],
-      rotation: Math.random() * 360
-    }));
-
-    setConfetti(pieces);
-
-    const timer = setTimeout(() => {
-      setSuccess(false);
-      setConfetti([]);
-    }, 5500);
-
-    return () => clearTimeout(timer);
-  }, [success]);
-
-  const [confetti, setConfetti] = useState([]);
-
   const [form, setForm] = useState({
     college_name: '',
+    school_name: '',
     department: '',
     admission_year: '',
     agent_name: '',
-    overall_rating: 5,
     guidance_rating: 5,
     communication_rating: 5,
     support_rating: 5,
+    company_name: '',
+    job_role: '',
+    duration: '',
+    stipend: '',
+    project_title: '',
+    domain: '',
+    technologies: '',
+    guide_name: '',
+    overall_rating: 5,
     review: ''
   });
+
+  const titles = {
+    college: 'College Feedback',
+    internship: 'Internship & Job Feedback',
+    project: 'Projects Work Feedback'
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('jmkToken');
@@ -63,7 +67,7 @@ function Feedback() {
     const loadStudent = async () => {
       try {
         const response = await axios.get(
-          'https://jmk-college-feedback.onrender.com/api/auth/me',
+          `${API}/api/auth/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -71,10 +75,10 @@ function Feedback() {
           }
         );
 
-        const studentData = response.data.student || response.data;
-        setSelectedImage(studentData.profile_image || '');
+        const student = response.data.student || response.data;
+        setSelectedImage(student.profile_image || '');
       } catch (error) {
-        console.error('Student profile loading error:', error);
+        console.error('Profile loading error:', error);
         setMessage('Unable to load student profile.');
       } finally {
         setProfileLoading(false);
@@ -93,13 +97,12 @@ function Feedback() {
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
 
-    if (!allowedTypes.includes(file.type)) {
-      setMessage('Please select JPG, PNG or WEBP image.');
+    if (!allowed.includes(file.type)) {
+      setMessage('Select JPG, PNG or WEBP image.');
       e.target.value = '';
       return;
     }
@@ -118,11 +121,29 @@ function Feedback() {
       setMessage('');
     };
 
-    reader.onerror = () => {
-      setMessage('Unable to read selected image.');
-    };
-
     reader.readAsDataURL(file);
+  };
+
+  const handleVideoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ['video/mp4', 'video/webm'];
+
+    if (!allowed.includes(file.type)) {
+      setMessage('Select MP4 or WebM video.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setMessage('Video size must be below 20 MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setVideo(file);
+    setMessage('');
   };
 
   const handleSubmit = async (e) => {
@@ -139,17 +160,56 @@ function Feedback() {
     try {
       setLoading(true);
 
+      const data = new FormData();
+
+      if (category === 'college') {
+        data.append('college_name', form.college_name);
+        data.append('school_name', form.school_name);
+        data.append('department', form.department);
+        data.append('admission_year', form.admission_year);
+        data.append('agent_name', form.agent_name);
+        data.append('overall_rating', form.overall_rating);
+        data.append('guidance_rating', form.guidance_rating);
+        data.append('communication_rating', form.communication_rating);
+        data.append('support_rating', form.support_rating);
+        data.append('review', form.review);
+
+        if (newPhoto) {
+          data.append('profile_image', newPhoto);
+        }
+      }
+
+      if (category === 'internship') {
+        data.append('company_name', form.company_name);
+        data.append('job_role', form.job_role);
+        data.append('duration', form.duration);
+        data.append('stipend', form.stipend);
+        data.append('overall_rating', form.overall_rating);
+        data.append('review', form.review);
+      }
+
+      if (category === 'project') {
+        data.append('project_title', form.project_title);
+        data.append('domain', form.domain);
+        data.append('technologies', form.technologies);
+        data.append('guide_name', form.guide_name);
+        data.append('overall_rating', form.overall_rating);
+        data.append('review', form.review);
+      }
+
+      if (video) {
+        data.append('video', video);
+      }
+
+      const endpoint = category === 'college'
+        ? '/api/feedback'
+        : category === 'internship'
+          ? '/api/internship'
+          : '/api/projects';
+
       const response = await axios.post(
-        'https://jmk-college-feedback.onrender.com/api/feedback',
-        {
-          ...form,
-          admission_year: Number(form.admission_year),
-          overall_rating: Number(form.overall_rating),
-          guidance_rating: Number(form.guidance_rating),
-          communication_rating: Number(form.communication_rating),
-          support_rating: Number(form.support_rating),
-          profile_image: newPhoto || null
-        },
+        `${API}${endpoint}`,
+        data,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -158,116 +218,73 @@ function Feedback() {
       );
 
       setMessage(
-        response.data.message || 'Feedback submitted successfully.'
+        response.data.message || 'Feedback submitted successfully!'
       );
 
       setSuccess(true);
-      setNewPhoto('');
 
-      setForm({
-        college_name: '',
-        department: '',
-        admission_year: '',
-        agent_name: '',
-        overall_rating: 5,
-        guidance_rating: 5,
-        communication_rating: 5,
-        support_rating: 5,
-        review: ''
-      });
+      setTimeout(() => {
+        navigate('/');
+      }, 2500);
 
     } catch (error) {
+      console.error('Feedback submission error:', error);
+
       setMessage(
-        error.response?.data?.message || 'Unable to submit feedback'
+        error.response?.data?.message ||
+        'Unable to submit feedback. Please try again.'
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const fields = [
-    ['overall_rating', 'Overall Rating'],
-    ['guidance_rating', 'Guidance Rating'],
-    ['communication_rating', 'Communication Rating'],
-    ['support_rating', 'Support Rating']
-  ];
-
   if (profileLoading) {
     return <div style={centerStyle}>Loading student profile...</div>;
   }
 
+  const ratingFields = category === 'college'
+    ? [
+        ['overall_rating', 'Overall Rating'],
+        ['guidance_rating', 'Guidance Rating'],
+        ['communication_rating', 'Communication Rating'],
+        ['support_rating', 'Support Rating']
+      ]
+    : [['overall_rating', 'Overall Rating']];
+
+  const CategoryIcon = category === 'college'
+    ? GraduationCap
+    : category === 'internship'
+      ? BriefcaseBusiness
+      : FolderKanban;
+
   return (
     <div style={pageStyle}>
-
       {success && (
-        <>
-          <style>
-            {`
-              @keyframes confettiFall {
-                0% {
-                  transform: translateY(-10vh) rotate(0deg);
-                  opacity: 1;
-                }
-                100% {
-                  transform: translateY(110vh) rotate(720deg);
-                  opacity: 0;
-                }
-              }
-              @keyframes successPop {
-                0% { transform: scale(0.5); opacity: 0; }
-                70% { transform: scale(1.08); opacity: 1; }
-                100% { transform: scale(1); opacity: 1; }
-              }
-            `}
-          </style>
-
-          <div style={confettiLayerStyle}>
-            {confetti.map((piece) => (
-              <span
-                key={piece.id}
-                style={{
-                  position: 'absolute',
-                  left: `${piece.left}%`,
-                  top: '-20px',
-                  width: '10px',
-                  height: '15px',
-                  background: piece.color,
-                  borderRadius: '2px',
-                  transform: `rotate(${piece.rotation}deg)`,
-                  animation: `confettiFall ${piece.duration}s ${piece.delay}s linear forwards`
-                }}
-              />
-            ))}
-          </div>
-
-          <div style={successPopupStyle}>
-            <CheckCircle size={48} color="#159E9D" />
-            <h2 style={{ color: '#174F80', margin: '12px 0 5px' }}>
-              Thank You!
-            </h2>
-            <p style={{ color: '#64748B', margin: 0 }}>
-              Your feedback has been submitted successfully.
-            </p>
-            <div style={{ fontSize: 26, marginTop: 12 }}>🎉 🎊 ✨</div>
-          </div>
-        </>
+        <div style={successPopupStyle}>
+          <CheckCircle size={48} color="#159E9D" />
+          <h2 style={{ color: '#174F80' }}>Thank You!</h2>
+          <p>Your feedback has been submitted successfully.</p>
+          <p style={{ color: '#159E9D' }}>Redirecting to Home Page...</p>
+        </div>
       )}
 
       <div style={containerStyle}>
-
         <button
           onClick={() => navigate('/dashboard')}
-          style={buttonStyle}
+          style={backButtonStyle}
         >
           <ArrowLeft size={17} />
           Back to Dashboard
         </button>
 
-        <h1 style={headingStyle}>Student Feedback Form</h1>
-
-        <p style={subtitleStyle}>
-          Share your college admission experience with us.
-        </p>
+        <div style={{ textAlign: 'center', marginTop: 25 }}>
+          <CategoryIcon size={42} color="#159E9D" />
+          <h1 style={headingStyle}>{titles[category]}</h1>
+          <p style={subtitleStyle}>
+            Share your genuine experience with other students.
+          </p>
+        </div>
 
         {message && (
           <p style={messageStyle}>{message}</p>
@@ -275,128 +292,243 @@ function Feedback() {
 
         <form onSubmit={handleSubmit}>
 
+          {/* COLLEGE FIELDS */}
+          {category === 'college' && (
+            <>
+              <label style={labelStyle}>
+                <Camera size={17} /> Upload Student Photo
+              </label>
+
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoChange}
+                style={inputStyle}
+              />
+
+              {selectedImage && (
+                <div style={previewStyle}>
+                  <img
+                    src={selectedImage}
+                    alt="Student"
+                    style={photoStyle}
+                  />
+                  <span>Photo Preview</span>
+                </div>
+              )}
+
+              <label style={labelStyle}>College Name *</label>
+              <input
+                style={inputStyle}
+                name="college_name"
+                value={form.college_name}
+                onChange={handleChange}
+                placeholder="Enter college name"
+                required
+              />
+              <label style={labelStyle}>School Name *</label>
+              <input
+                style={inputStyle}
+                name="school_name"
+                value={form.school_name}
+                onChange={handleChange}
+                placeholder="Enter school name"
+                required  
+              />
+
+              <label style={labelStyle}>Department / Course *</label>
+              <input
+                style={inputStyle}
+                name="department"
+                value={form.department}
+                onChange={handleChange}
+                placeholder="Enter department"
+                required
+              />
+
+              <label style={labelStyle}>Admission Year *</label>
+              <input
+                style={inputStyle}
+                type="number"
+                name="admission_year"
+                value={form.admission_year}
+                onChange={handleChange}
+                min="2000"
+                max={new Date().getFullYear()}
+                placeholder="Enter admission year"
+                required
+              />
+
+              <label style={labelStyle}>Admission Agent Name *</label>
+              <input
+                style={inputStyle}
+                name="agent_name"
+                value={form.agent_name}
+                onChange={handleChange}
+                placeholder="Enter agent name"
+                required
+              />
+            </>
+          )}
+
+          {/* INTERNSHIP FIELDS */}
+          {category === 'internship' && (
+            <>
+              <label style={labelStyle}>Company Name *</label>
+              <input
+                style={inputStyle}
+                name="company_name"
+                value={form.company_name}
+                onChange={handleChange}
+                placeholder="Enter company name"
+                required
+              />
+
+              <label style={labelStyle}>Job Role / Internship Role</label>
+              <input
+                style={inputStyle}
+                name="job_role"
+                value={form.job_role}
+                onChange={handleChange}
+                placeholder="Example: Web Developer Intern"
+              />
+
+              <label style={labelStyle}>Duration</label>
+              <input
+                style={inputStyle}
+                name="duration"
+                value={form.duration}
+                onChange={handleChange}
+                placeholder="Example: 1 month"
+              />
+
+              <label style={labelStyle}>Stipend / Salary (Optional)</label>
+              <input
+                style={inputStyle}
+                name="stipend"
+                value={form.stipend}
+                onChange={handleChange}
+                placeholder="Optional"
+              />
+            </>
+          )}
+
+          {/* PROJECT FIELDS */}
+          {category === 'project' && (
+            <>
+              <label style={labelStyle}>Project Title *</label>
+              <input
+                style={inputStyle}
+                name="project_title"
+                value={form.project_title}
+                onChange={handleChange}
+                placeholder="Enter project title"
+                required
+              />
+
+              <label style={labelStyle}>Project Domain</label>
+              <input
+                style={inputStyle}
+                name="domain"
+                value={form.domain}
+                onChange={handleChange}
+                placeholder="Example: Web Development"
+              />
+
+              <label style={labelStyle}>Technologies Used</label>
+              <input
+                style={inputStyle}
+                name="technologies"
+                value={form.technologies}
+                onChange={handleChange}
+                placeholder="Example: React, Node.js, PostgreSQL"
+              />
+
+              <label style={labelStyle}>Guide / Organization Name</label>
+              <input
+                style={inputStyle}
+                name="guide_name"
+                value={form.guide_name}
+                onChange={handleChange}
+                placeholder="Enter guide name"
+              />
+            </>
+          )}
+
+          {/* RATINGS */}
+          <h3 style={sectionHeadingStyle}>Rate Your Experience</h3>
+
+          {ratingFields.map(([name, label]) => (
+            <div key={name}>
+              <label style={labelStyle}>
+                <Star size={17} color="#FF8045" />
+                {label}
+              </label>
+
+              <select
+                style={inputStyle}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+              >
+                {[5, 4, 3, 2, 1].map(rating => (
+                  <option key={rating} value={rating}>
+                    {rating} / 5
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+
+          {/* VIDEO */}
           <label style={labelStyle}>
-            <Camera size={17} />
-            Upload Student Photo
+            <Video size={17} />
+            Upload Experience Video (Optional)
           </label>
 
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handlePhotoChange}
+            accept="video/mp4,video/webm"
+            onChange={handleVideoChange}
             style={inputStyle}
           />
 
           <small style={helperStyle}>
-            JPG, PNG or WEBP. Maximum size: 1.8 MB.
+            MP4 or WebM. Maximum size: 20 MB.
           </small>
 
-          {selectedImage && (
-            <div style={previewBoxStyle}>
-              <img
-                src={selectedImage}
-                alt="Student photo preview"
-                style={photoStyle}
-              />
-              <span style={{ color: '#159E9D', fontWeight: '600' }}>
-                Photo Preview
-              </span>
-            </div>
+          {video && (
+            <p style={{ color: '#159E9D' }}>
+              Selected video: {video.name}
+            </p>
           )}
 
-          <label style={labelStyle}>College Name *</label>
-          <input
-            style={inputStyle}
-            name="college_name"
-            value={form.college_name}
-            onChange={handleChange}
-            placeholder="Enter college name"
-            required
-          />
-
-          <label style={labelStyle}>Department / Course *</label>
-          <input
-            style={inputStyle}
-            name="department"
-            value={form.department}
-            onChange={handleChange}
-            placeholder="Enter department or course name"
-            required
-          />
-
-          <label style={labelStyle}>Admission Year *</label>
-          <input
-            style={inputStyle}
-            type="number"
-            name="admission_year"
-            value={form.admission_year}
-            onChange={handleChange}
-            min="2000"
-            max={new Date().getFullYear()}
-            placeholder="Enter admission year"
-            required
-          />
-
-          <label style={labelStyle}>Admission Agent Name *</label>
-          <input
-            style={inputStyle}
-            name="agent_name"
-            value={form.agent_name}
-            onChange={handleChange}
-            placeholder="Enter agent name"
-            required
-          />
-
-          <h3 style={sectionHeadingStyle}>Rate Your Experience</h3>
-
-          {fields.map(([name, label]) => (
-            <div key={name} style={{ marginBottom: '18px' }}>
-              <label style={labelStyle}>{label}</label>
-
-              <div style={ratingRowStyle}>
-                <Star size={19} color="#FF8045" />
-
-                <select
-                  style={inputStyle}
-                  name={name}
-                  value={form[name]}
-                  onChange={handleChange}
-                >
-                  {[5, 4, 3, 2, 1].map((rating) => (
-                    <option key={rating} value={rating}>
-                      {rating} / 5
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ))}
-
+          {/* REVIEW */}
           <label style={labelStyle}>Your Written Feedback *</label>
+
           <textarea
             style={textareaStyle}
             name="review"
             value={form.review}
             onChange={handleChange}
-            placeholder="Write about your admission experience..."
+            placeholder="Write about your experience..."
+            minLength={5}
             required
           />
 
           <button
-            type="submit"
-            disabled={loading}
-            style={{
-              ...buttonStyle,
-              width: '100%',
-              marginTop: '20px',
-              justifyContent: 'center',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
+  type="submit"
+  disabled={false}
+  onClick={() => console.log('SUBMIT BUTTON CLICKED')}
+  style={{
+    ...submitButtonStyle,
+    cursor: 'pointer',
+    opacity: 1
+  }}
+>
             <Send size={17} />
             {loading ? 'Submitting...' : 'Submit Feedback'}
           </button>
-
         </form>
       </div>
     </div>
@@ -430,18 +562,11 @@ const centerStyle = {
 
 const headingStyle = {
   color: '#174F80',
-  marginTop: '25px'
+  marginBottom: '8px'
 };
 
-const subtitleStyle = { color: '#64748B' };
-
-const photoStyle = {
-  width: '80px',
-  height: '80px',
-  borderRadius: '50%',
-  objectFit: 'contain',
-  border: '3px solid #159E9D',
-  background: '#F3EDE2'
+const subtitleStyle = {
+  color: '#64748B'
 };
 
 const labelStyle = {
@@ -461,7 +586,6 @@ const inputStyle = {
   border: '1px solid #DCE5EC',
   borderRadius: '8px',
   fontSize: '15px',
-  outline: 'none',
   color: '#263B50',
   background: '#FFFFFF'
 };
@@ -472,33 +596,51 @@ const textareaStyle = {
   resize: 'vertical'
 };
 
-const buttonStyle = {
+const backButtonStyle = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '8px',
   padding: '11px 18px',
   border: 'none',
   borderRadius: '8px',
-  background: 'linear-gradient(135deg, #159E9D, #174F80)',
+  background: '#174F80',
   color: '#FFFFFF',
-  fontWeight: '600',
   cursor: 'pointer'
+};
+
+const submitButtonStyle = {
+  ...backButtonStyle,
+  width: '100%',
+  marginTop: '22px',
+  justifyContent: 'center',
+  background: 'linear-gradient(135deg, #159E9D, #174F80)',
+  fontWeight: '600',
+  fontSize: '15px'
+};
+
+const photoStyle = {
+  width: '75px',
+  height: '75px',
+  borderRadius: '50%',
+  objectFit: 'cover',
+  border: '3px solid #159E9D'
+};
+
+const previewStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '14px',
+  padding: '12px',
+  marginTop: '12px',
+  background: '#F0F7F8',
+  borderRadius: '10px',
+  color: '#159E9D'
 };
 
 const helperStyle = {
   display: 'block',
   color: '#64748B',
   marginTop: '7px'
-};
-
-const previewBoxStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '14px',
-  background: '#F0F7F8',
-  padding: '14px',
-  borderRadius: '10px',
-  marginTop: '12px'
 };
 
 const messageStyle = {
@@ -514,26 +656,11 @@ const sectionHeadingStyle = {
   marginTop: '25px'
 };
 
-const ratingRowStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px'
-};
-
-const confettiLayerStyle = {
-  position: 'fixed',
-  inset: 0,
-  pointerEvents: 'none',
-  overflow: 'hidden',
-  zIndex: 1000
-};
-
 const successPopupStyle = {
   position: 'fixed',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  animation: 'successPop 0.5s ease-out',
   background: '#FFFFFF',
   padding: '28px',
   borderRadius: '18px',
