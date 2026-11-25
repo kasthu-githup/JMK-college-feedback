@@ -34,15 +34,15 @@ function Login() {
 
     try {
       setLoading(true);
+const endpoint = role === 'student'
+  ? 'https://jmk-college-feedback.onrender.com/api/auth/login'
+  : 'https://jmk-college-feedback.onrender.com/api/admin/login';
 
-      const endpoint = role === 'student'
-  ? 'https://jmk-college-feedback.onrender.com/api';
-  : 'https://jmk-college-feedback.onrender.com/api/admin/login';      const payload = role === 'student'
-        ? { email: form.email.trim(), password: form.password }
-        : { username: form.username.trim(), password: form.password };
+const payload = role === 'student'
+  ? { email: form.email.trim(), password: form.password }
+  : { username: form.username.trim(), password: form.password };
 
-      const response = await axios.post(endpoint, payload);
-
+const response = await axios.post(endpoint, payload);
       if (role === 'student') {
         localStorage.setItem('jmkToken', response.data.token);
         localStorage.setItem(
