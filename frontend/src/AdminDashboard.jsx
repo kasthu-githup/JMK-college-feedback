@@ -33,6 +33,9 @@ function AdminDashboard() {
 
   const [stats, setStats] = useState({
     total_feedback: 0,
+    college_feedback: 0,
+    internship_feedback: 0,
+    project_feedback: 0,
     pending_feedback: 0,
     approved_feedback: 0,
     rejected_feedback: 0
@@ -45,25 +48,31 @@ function AdminDashboard() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // LOAD DASHBOARD
   const loadDashboard = async () => {
     try {
       setLoading(true);
       setError('');
 
       const [statsResponse, feedbackResponse] = await Promise.all([
-        api.get('/api/admin/dashboard'),
-        api.get('/api/admin/feedback')
+        api.get('/admin/dashboard'),
+        api.get('/admin/feedback')
       ]);
 
       setStats(statsResponse.data);
+
       setFeedback(
         Array.isArray(feedbackResponse.data)
           ? feedbackResponse.data
           : []
       );
+
     } catch (err) {
+      console.error('Admin Dashboard Error:', err);
+
       setError(
-        err.response?.data?.message || 'Unable to load dashboard'
+        err.response?.data?.message ||
+        'Unable to load dashboard'
       );
 
       if ([401, 403].includes(err.response?.status)) {
@@ -71,6 +80,7 @@ function AdminDashboard() {
         localStorage.removeItem('jmkAdmin');
         navigate('/admin-login');
       }
+
     } finally {
       setLoading(false);
     }
@@ -85,15 +95,27 @@ function AdminDashboard() {
     loadDashboard();
   }, []);
 
+  // APPROVE OR REJECT
   const updateStatus = async (id, status) => {
     try {
-      await api.patch(`/api/admin/feedback/${id}/status`, { status });
+      await api.patch(
+        `/admin/feedback/${id}/status`,
+        { status }
+      );
+
+      alert(`Feedback ${status} successfully!`);
       await loadDashboard();
+
     } catch (err) {
-      alert(err.response?.data?.message || 'Status update failed');
+      console.error('Status Update Error:', err);
+      alert(
+        err.response?.data?.message ||
+        'Status update failed'
+      );
     }
   };
 
+  // DELETE FEEDBACK
   const deleteFeedback = async (item) => {
     const confirmDelete = window.confirm(
       'Are you sure you want to delete this feedback permanently?'
@@ -103,22 +125,29 @@ function AdminDashboard() {
 
     try {
       await api.delete(
-        `/api/admin/feedback/${item.category}/${item.id}`
+        `/admin/feedback/${item.category}/${item.id}`
       );
 
       alert('Feedback deleted successfully!');
       await loadDashboard();
+
     } catch (err) {
-      alert(err.response?.data?.message || 'Unable to delete feedback');
+      console.error('Delete Feedback Error:', err);
+      alert(
+        err.response?.data?.message ||
+        'Unable to delete feedback'
+      );
     }
   };
 
+  // LOGOUT
   const logout = () => {
     localStorage.removeItem('jmkAdminToken');
     localStorage.removeItem('jmkAdmin');
     navigate('/admin-login');
   };
 
+  // SEARCH AND FILTER
   const filteredFeedback = feedback.filter((item) => {
     const search = searchTerm.toLowerCase().trim();
 
@@ -146,11 +175,15 @@ function AdminDashboard() {
 
     const matchesStatus =
       statusFilter === 'all' ||
-      (item.category === 'college' && item.status === statusFilter);
+      (
+        item.category === 'college' &&
+        (item.status || 'pending') === statusFilter
+      );
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  // CATEGORY NAME
   const getCategoryName = (category) => {
     if (category === 'college') return 'College Feedback';
     if (category === 'internship') return 'Internship & Job Feedback';
@@ -158,6 +191,7 @@ function AdminDashboard() {
     return 'Feedback';
   };
 
+  // CATEGORY ICON
   const getCategoryIcon = (category) => {
     if (category === 'college') return <GraduationCap size={17} />;
     if (category === 'internship') return <Briefcase size={17} />;
@@ -166,16 +200,25 @@ function AdminDashboard() {
   };
 
   if (loading) {
-    return <div style={styles.center}>Loading Admin Dashboard...</div>;
+    return (
+      <div style={styles.center}>
+        Loading Admin Dashboard...
+      </div>
+    );
   }
 
   return (
     <div style={styles.page}>
+
+      {/* HEADER */}
       <header style={styles.header}>
         <div style={styles.brand}>
           <ShieldCheck size={32} />
+
           <div>
-            <h2 style={styles.brandTitle}>JMK Admin Panel</h2>
+            <h2 style={styles.brandTitle}>
+              JMK Admin Panel
+            </h2>
             <small>Student Feedback Management</small>
           </div>
         </div>
@@ -186,29 +229,39 @@ function AdminDashboard() {
       </header>
 
       <main style={styles.container}>
-        <h1 style={styles.heading}>Dashboard Overview</h1>
+
+        <h1 style={styles.heading}>
+          Dashboard Overview
+        </h1>
+
         <p style={styles.subtitle}>
           Manage college, internship and project feedback submissions.
         </p>
 
-        {error && <p style={styles.error}>{error}</p>}
+        {error && (
+          <p style={styles.error}>{error}</p>
+        )}
 
+        {/* STATISTICS */}
         <div style={styles.statsGrid}>
           <StatCard
             title="Total Feedback"
             value={stats.total_feedback}
             icon={<MessageSquare />}
           />
+
           <StatCard
             title="Pending"
             value={stats.pending_feedback}
             icon={<Clock />}
           />
+
           <StatCard
             title="Approved"
             value={stats.approved_feedback}
             icon={<CheckCircle />}
           />
+
           <StatCard
             title="Rejected"
             value={stats.rejected_feedback}
@@ -216,31 +269,53 @@ function AdminDashboard() {
           />
         </div>
 
+        {/* FEEDBACK SECTION */}
         <div style={styles.sectionHeader}>
           <h2>All Student Feedback</h2>
-          <button style={styles.refresh} onClick={loadDashboard}>
+
+          <button
+            style={styles.refresh}
+            onClick={loadDashboard}
+          >
             <RefreshCw size={16} /> Refresh
           </button>
         </div>
 
+        {/* CATEGORY SUMMARY */}
         <div style={styles.categorySummary}>
-          <div>
+          <div style={styles.categorySummaryItem}>
             <GraduationCap size={20} />
-            <span>College: {feedback.filter((x) => x.category === 'college').length}</span>
+            <span>
+              College: {feedback.filter(
+                x => x.category === 'college'
+              ).length}
+            </span>
           </div>
-          <div>
+
+          <div style={styles.categorySummaryItem}>
             <Briefcase size={20} />
-            <span>Internship: {feedback.filter((x) => x.category === 'internship').length}</span>
+            <span>
+              Internship: {feedback.filter(
+                x => x.category === 'internship'
+              ).length}
+            </span>
           </div>
-          <div>
+
+          <div style={styles.categorySummaryItem}>
             <Code size={20} />
-            <span>Projects: {feedback.filter((x) => x.category === 'project').length}</span>
+            <span>
+              Projects: {feedback.filter(
+                x => x.category === 'project'
+              ).length}
+            </span>
           </div>
         </div>
 
+        {/* SEARCH AND FILTER */}
         <div style={styles.filterBox}>
           <div style={styles.searchBox}>
             <Search size={19} color="#159E9D" />
+
             <input
               type="text"
               placeholder="Search student, company, project..."
@@ -277,13 +352,21 @@ function AdminDashboard() {
           Showing {filteredFeedback.length} of {feedback.length} submissions
         </p>
 
+        {/* FEEDBACK CARDS */}
         {filteredFeedback.length === 0 ? (
-          <div style={styles.empty}>No matching feedback found.</div>
+          <div style={styles.empty}>
+            No matching feedback found.
+          </div>
         ) : (
           filteredFeedback.map((item) => (
-            <div key={`${item.category}-${item.id}`} style={styles.card}>
+            <div
+              key={`${item.category}-${item.id}`}
+              style={styles.card}
+            >
+
               <div style={styles.cardTop}>
                 <div style={styles.studentInfo}>
+
                   {item.profile_image ? (
                     <img
                       src={item.profile_image}
@@ -300,6 +383,7 @@ function AdminDashboard() {
                     <h3 style={styles.studentName}>
                       {item.student_name || 'Student'}
                     </h3>
+
                     <p style={styles.muted}>
                       {getCategoryName(item.category)}
                     </p>
@@ -331,41 +415,96 @@ function AdminDashboard() {
 
               <div style={styles.categoryLabel}>
                 {getCategoryIcon(item.category)}
-                <strong>{getCategoryName(item.category)}</strong>
+                <strong>
+                  {getCategoryName(item.category)}
+                </strong>
               </div>
 
+              {/* COLLEGE */}
               {item.category === 'college' && (
                 <>
-                  <p><b>College:</b> {item.primary_title || item.college_name || '-'}</p>
-                  <p><b>Department:</b> {item.secondary_title || item.department || '-'}</p>
-                  <p><b>Admission Year:</b> {item.detail_one || item.admission_year || '-'}</p>
-                  <p><b>Agent / Faculty:</b> {item.detail_two || item.agent_name || '-'}</p>
-                  <p><b>Guidance:</b> {item.guidance_rating ?? '-'}/5</p>
-                  <p><b>Communication:</b> {item.communication_rating ?? '-'}/5</p>
-                  <p><b>Support:</b> {item.support_rating ?? '-'}/5</p>
+                  <p>
+                    <b>College:</b>{' '}
+                    {item.primary_title || item.college_name || '-'}
+                  </p>
+
+                  <p>
+                    <b>Department:</b>{' '}
+                    {item.secondary_title || item.department || '-'}
+                  </p>
+
+                  <p>
+                    <b>Admission Year:</b>{' '}
+                    {item.detail_one || item.admission_year || '-'}
+                  </p>
+
+                  <p>
+                    <b>Agent / Faculty:</b>{' '}
+                    {item.detail_two || item.agent_name || '-'}
+                  </p>
+
+                  <p>
+                    <b>Guidance:</b>{' '}
+                    {item.guidance_rating ?? '-'}/5
+                  </p>
+
+                  <p>
+                    <b>Communication:</b>{' '}
+                    {item.communication_rating ?? '-'}/5
+                  </p>
+
+                  <p>
+                    <b>Support:</b>{' '}
+                    {item.support_rating ?? '-'}/5
+                  </p>
                 </>
               )}
 
+              {/* INTERNSHIP */}
               {item.category === 'internship' && (
                 <>
-                  <p><b>Company:</b> {item.primary_title || '-'}</p>
-                  <p><b>Job Role:</b> {item.secondary_title || '-'}</p>
-                  <p><b>Duration:</b> {item.detail_one || '-'}</p>
-                  <p><b>Stipend / Salary:</b> {item.detail_two || '-'}</p>
+                  <p>
+                    <b>Company:</b> {item.primary_title || '-'}
+                  </p>
+
+                  <p>
+                    <b>Job Role:</b> {item.secondary_title || '-'}
+                  </p>
+
+                  <p>
+                    <b>Duration:</b> {item.detail_one || '-'}
+                  </p>
+
+                  <p>
+                    <b>Stipend / Salary:</b> {item.detail_two || '-'}
+                  </p>
                 </>
               )}
 
+              {/* PROJECT */}
               {item.category === 'project' && (
                 <>
-                  <p><b>Project Title:</b> {item.primary_title || '-'}</p>
-                  <p><b>Domain:</b> {item.secondary_title || '-'}</p>
-                  <p><b>Technologies:</b> {item.detail_one || '-'}</p>
-                  <p><b>Guide / Organization:</b> {item.detail_two || '-'}</p>
+                  <p>
+                    <b>Project Title:</b> {item.primary_title || '-'}
+                  </p>
+
+                  <p>
+                    <b>Domain:</b> {item.secondary_title || '-'}
+                  </p>
+
+                  <p>
+                    <b>Technologies:</b> {item.detail_one || '-'}
+                  </p>
+
+                  <p>
+                    <b>Guide / Organization:</b> {item.detail_two || '-'}
+                  </p>
                 </>
               )}
 
               <p style={styles.rating}>
-                <b>Overall Rating:</b> {item.overall_rating ?? '-'}/5
+                <b>Overall Rating:</b>{' '}
+                {item.overall_rating ?? '-'}/5
               </p>
 
               <div style={styles.review}>
@@ -375,7 +514,10 @@ function AdminDashboard() {
 
               {item.video_url && (
                 <div style={styles.videoSection}>
-                  <p><Video size={17} /> Feedback Video</p>
+                  <p>
+                    <Video size={17} /> Feedback Video
+                  </p>
+
                   <video
                     src={item.video_url}
                     controls
@@ -385,29 +527,33 @@ function AdminDashboard() {
               )}
 
               <small style={styles.muted}>
-                Submitted: {item.created_at
+                Submitted:{' '}
+                {item.created_at
                   ? new Date(item.created_at).toLocaleString()
                   : '-'}
               </small>
 
+              {/* ACTIONS */}
               <div style={styles.actions}>
-                {item.category === 'college' && item.status === 'pending' && (
-                  <>
-                    <button
-                      style={styles.approve}
-                      onClick={() => updateStatus(item.id, 'approved')}
-                    >
-                      <CheckCircle size={16} /> Approve
-                    </button>
 
-                    <button
-                      style={styles.reject}
-                      onClick={() => updateStatus(item.id, 'rejected')}
-                    >
-                      <XCircle size={16} /> Reject
-                    </button>
-                  </>
-                )}
+                {item.category === 'college' &&
+                  (item.status || 'pending') === 'pending' && (
+                    <>
+                      <button
+                        style={styles.approve}
+                        onClick={() => updateStatus(item.id, 'approved')}
+                      >
+                        <CheckCircle size={16} /> Approve
+                      </button>
+
+                      <button
+                        style={styles.reject}
+                        onClick={() => updateStatus(item.id, 'rejected')}
+                      >
+                        <XCircle size={16} /> Reject
+                      </button>
+                    </>
+                  )}
 
                 <button
                   style={styles.delete}
@@ -415,19 +561,25 @@ function AdminDashboard() {
                 >
                   <Trash2 size={16} /> Delete
                 </button>
+
               </div>
             </div>
           ))
         )}
+
       </main>
     </div>
   );
 }
 
+// STAT CARD
 function StatCard({ title, value, icon }) {
   return (
     <div style={styles.statCard}>
-      <div style={styles.statIcon}>{icon}</div>
+      <div style={styles.statIcon}>
+        {icon}
+      </div>
+
       <div>
         <p style={styles.muted}>{title}</p>
         <h2>{value ?? 0}</h2>
@@ -436,6 +588,7 @@ function StatCard({ title, value, icon }) {
   );
 }
 
+// STYLES
 const styles = {
   page: {
     minHeight: '100vh',
@@ -443,6 +596,7 @@ const styles = {
     fontFamily: 'Arial, sans-serif',
     color: '#174F80'
   },
+
   header: {
     background: '#174F80',
     color: '#FFFFFF',
@@ -453,16 +607,19 @@ const styles = {
     flexWrap: 'wrap',
     gap: '15px'
   },
+
   brand: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
     color: '#FF8045'
   },
+
   brandTitle: {
     margin: 0,
     color: '#FFFFFF'
   },
+
   logout: {
     display: 'flex',
     alignItems: 'center',
@@ -474,23 +631,28 @@ const styles = {
     color: '#FFFFFF',
     cursor: 'pointer'
   },
+
   container: {
     maxWidth: '1100px',
     margin: 'auto',
     padding: '30px 20px'
   },
+
   heading: {
     color: '#174F80'
   },
+
   subtitle: {
     color: '#64748B'
   },
+
   statsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: '16px',
     margin: '25px 0 35px'
   },
+
   statCard: {
     background: '#FFFFFF',
     padding: '20px',
@@ -501,9 +663,11 @@ const styles = {
     boxShadow: '0 2px 8px #174F8015',
     border: '1px solid #DCE8EF'
   },
+
   statIcon: {
     color: '#159E9D'
   },
+
   sectionHeader: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -511,6 +675,7 @@ const styles = {
     flexWrap: 'wrap',
     gap: '12px'
   },
+
   refresh: {
     display: 'flex',
     gap: '7px',
@@ -522,12 +687,24 @@ const styles = {
     color: '#FFFFFF',
     cursor: 'pointer'
   },
+
   categorySummary: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
     gap: '12px',
     marginTop: '18px'
   },
+
+  categorySummaryItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#FFFFFF',
+    padding: '15px',
+    borderRadius: '9px',
+    border: '1px solid #DCE8EF'
+  },
+
   filterBox: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -538,6 +715,7 @@ const styles = {
     marginTop: '18px',
     border: '1px solid #DCE8EF'
   },
+
   searchBox: {
     display: 'flex',
     alignItems: 'center',
@@ -547,6 +725,7 @@ const styles = {
     borderRadius: '8px',
     minHeight: '44px'
   },
+
   searchInput: {
     width: '100%',
     border: 'none',
@@ -555,6 +734,7 @@ const styles = {
     color: '#174F80',
     background: 'transparent'
   },
+
   filterSelect: {
     padding: '12px',
     border: '1px solid #DCE8EF',
@@ -564,11 +744,13 @@ const styles = {
     fontSize: '14px',
     cursor: 'pointer'
   },
+
   resultCount: {
     color: '#64748B',
     fontSize: '14px',
     marginTop: '15px'
   },
+
   card: {
     background: '#FFFFFF',
     padding: '22px',
@@ -580,11 +762,13 @@ const styles = {
     gap: '10px',
     overflowWrap: 'anywhere'
   },
+
   studentInfo: {
     display: 'flex',
     alignItems: 'center',
     gap: '14px'
   },
+
   studentPhoto: {
     width: '65px',
     height: '65px',
@@ -592,6 +776,7 @@ const styles = {
     objectFit: 'cover',
     border: '3px solid #159E9D'
   },
+
   studentAvatar: {
     width: '65px',
     height: '65px',
@@ -604,9 +789,11 @@ const styles = {
     fontSize: '25px',
     fontWeight: 'bold'
   },
+
   studentName: {
     margin: '0 0 5px'
   },
+
   cardTop: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -614,6 +801,7 @@ const styles = {
     gap: '10px',
     flexWrap: 'wrap'
   },
+
   categoryLabel: {
     display: 'flex',
     alignItems: 'center',
@@ -621,23 +809,22 @@ const styles = {
     color: '#159E9D',
     marginTop: '8px'
   },
-  categorySummaryItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  },
+
   status: {
     padding: '6px 12px',
     borderRadius: '20px',
     fontSize: '13px',
     fontWeight: 'bold'
   },
+
   muted: {
     color: '#64748B'
   },
+
   rating: {
     color: '#174F80'
   },
+
   review: {
     background: '#F8F5EF',
     padding: '14px',
@@ -646,10 +833,12 @@ const styles = {
     color: '#174F80',
     whiteSpace: 'pre-wrap'
   },
+
   videoSection: {
     display: 'grid',
     gap: '8px'
   },
+
   video: {
     width: '100%',
     maxWidth: '500px',
@@ -657,12 +846,14 @@ const styles = {
     borderRadius: '10px',
     background: '#000000'
   },
+
   actions: {
     display: 'flex',
     gap: '10px',
     marginTop: '10px',
     flexWrap: 'wrap'
   },
+
   approve: {
     display: 'flex',
     gap: '7px',
@@ -674,6 +865,7 @@ const styles = {
     color: '#FFFFFF',
     cursor: 'pointer'
   },
+
   reject: {
     display: 'flex',
     gap: '7px',
@@ -685,6 +877,7 @@ const styles = {
     color: '#FFFFFF',
     cursor: 'pointer'
   },
+
   delete: {
     display: 'flex',
     gap: '7px',
@@ -696,6 +889,7 @@ const styles = {
     color: '#FFFFFF',
     cursor: 'pointer'
   },
+
   empty: {
     background: '#FFFFFF',
     padding: '30px',
@@ -704,9 +898,14 @@ const styles = {
     marginTop: '18px',
     color: '#174F80'
   },
+
   error: {
-    color: '#DC2626'
+    color: '#DC2626',
+    background: '#FEE2E2',
+    padding: '12px',
+    borderRadius: '8px'
   },
+
   center: {
     padding: '50px',
     textAlign: 'center',
