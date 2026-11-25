@@ -18,7 +18,7 @@ import {
   Video
 } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://jmk-college-feedback.onrender.com/api';
 
 function AdminDashboard() {
   const navigate = useNavigate();

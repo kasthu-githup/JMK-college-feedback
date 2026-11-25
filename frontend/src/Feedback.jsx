@@ -7,7 +7,7 @@ import {
   Video, GraduationCap, BriefcaseBusiness, FolderKanban
 } from 'lucide-react';
 
-const API = 'http://localhost:5000';
+const API = 'https://jmk-college-feedback.onrender.com/api';
 
 function Feedback() {
   const navigate = useNavigate();

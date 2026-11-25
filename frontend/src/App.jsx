@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import './App.css';
 
-const API = 'http://localhost:5000';
+const API = 'https://jmk-college-feedback.onrender.com/api';
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);

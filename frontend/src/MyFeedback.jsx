@@ -10,7 +10,7 @@ import {
   FolderKanban
 } from 'lucide-react';
 
-const API = 'http://localhost:5000';
+const API = 'https://jmk-college-feedback.onrender.com/api';
 
 function MyFeedback() {
   const navigate = useNavigate();

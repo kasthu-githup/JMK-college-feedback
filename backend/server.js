@@ -8,7 +8,7 @@ const app = express();
 // CORS
 app.use(cors({
   origin: [
-    'http://localhost:5173',
+    'https://jmk-college-feedback.onrender.com',
     'https://jmk-college-feedback-web.vercel.app'
   ]
 }));
