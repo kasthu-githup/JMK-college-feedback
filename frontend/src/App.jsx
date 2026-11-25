@@ -19,29 +19,55 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchAllFeedback = async () => {
-      try {
-        const [college, internship, projects] = await Promise.all([
-          axios.get(`${API}/api/feedback/approved`),
-          axios.get(`${API}/api/internship/public`),
-          axios.get(`${API}/api/projects/public`)
-        ]);
 
-        setCollegeFeedbacks(college.data);
-        setInternshipFeedbacks(internship.data);
-        setProjectFeedbacks(projects.data);
-        setError('');
-      } catch (err) {
-        console.error('Feedback loading error:', err);
-        setError('Unable to load feedback. Please try again later.');
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  const fetchAllFeedback = async () => {
+    try {
+      const results = await Promise.allSettled([
+        axios.get(`${API}/feedback/approved`),
+        axios.get(`${API}/internship/public`),
+        axios.get(`${API}/projects/public`)
+      ]);
+
+      if (results[0].status === 'fulfilled') {
+        setCollegeFeedbacks(results[0].value.data);
+      } else {
+        console.error('College feedback error:', results[0].reason);
       }
-    };
 
-    fetchAllFeedback();
-  }, []);
+      if (results[1].status === 'fulfilled') {
+        setInternshipFeedbacks(results[1].value.data);
+      } else {
+        console.error('Internship feedback error:', results[1].reason);
+      }
+
+      if (results[2].status === 'fulfilled') {
+        setProjectFeedbacks(results[2].value.data);
+      } else {
+        console.error('Project feedback error:', results[2].reason);
+      }
+
+      const allFailed = results.every(
+        result => result.status === 'rejected'
+      );
+
+      setError(
+        allFailed
+          ? 'Unable to load feedback. Please try again later.'
+          : ''
+      );
+
+    } catch (err) {
+      console.error('Feedback loading error:', err);
+      setError('Unable to load feedback. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchAllFeedback();
+}, []);
+
 
   const allFeedbacks = [
     ...collegeFeedbacks,
