@@ -66,14 +66,11 @@ function Feedback() {
 
     const loadStudent = async () => {
       try {
-        const response = await axios.get(
-          `${API}/api/auth/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+        const response = await axios.get(`${API}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`
           }
-        );
+        });
 
         const student = response.data.student || response.data;
         setSelectedImage(student.profile_image || '');
@@ -201,11 +198,12 @@ function Feedback() {
         data.append('video', video);
       }
 
+      // Correct API endpoints: API already contains /api
       const endpoint = category === 'college'
-        ? '/api/feedback'
+        ? '/feedback'
         : category === 'internship'
-          ? '/api/internship'
-          : '/api/projects';
+          ? '/internship'
+          : '/projects';
 
       const response = await axios.post(
         `${API}${endpoint}`,
@@ -228,7 +226,7 @@ function Feedback() {
       }, 2500);
 
     } catch (error) {
-      console.error('Feedback submission error:', error);
+      console.error('Feedback submission error:', error.response?.data || error);
 
       setMessage(
         error.response?.data?.message ||
@@ -271,6 +269,7 @@ function Feedback() {
 
       <div style={containerStyle}>
         <button
+          type="button"
           onClick={() => navigate('/dashboard')}
           style={backButtonStyle}
         >
@@ -286,13 +285,9 @@ function Feedback() {
           </p>
         </div>
 
-        {message && (
-          <p style={messageStyle}>{message}</p>
-        )}
+        {message && <p style={messageStyle}>{message}</p>}
 
         <form onSubmit={handleSubmit}>
-
-          {/* COLLEGE FIELDS */}
           {category === 'college' && (
             <>
               <label style={labelStyle}>
@@ -308,11 +303,7 @@ function Feedback() {
 
               {selectedImage && (
                 <div style={previewStyle}>
-                  <img
-                    src={selectedImage}
-                    alt="Student"
-                    style={photoStyle}
-                  />
+                  <img src={selectedImage} alt="Student" style={photoStyle} />
                   <span>Photo Preview</span>
                 </div>
               )}
@@ -326,6 +317,7 @@ function Feedback() {
                 placeholder="Enter college name"
                 required
               />
+
               <label style={labelStyle}>School Name *</label>
               <input
                 style={inputStyle}
@@ -333,7 +325,7 @@ function Feedback() {
                 value={form.school_name}
                 onChange={handleChange}
                 placeholder="Enter school name"
-                required  
+                required
               />
 
               <label style={labelStyle}>Department / Course *</label>
@@ -371,7 +363,6 @@ function Feedback() {
             </>
           )}
 
-          {/* INTERNSHIP FIELDS */}
           {category === 'internship' && (
             <>
               <label style={labelStyle}>Company Name *</label>
@@ -413,7 +404,6 @@ function Feedback() {
             </>
           )}
 
-          {/* PROJECT FIELDS */}
           {category === 'project' && (
             <>
               <label style={labelStyle}>Project Title *</label>
@@ -455,7 +445,6 @@ function Feedback() {
             </>
           )}
 
-          {/* RATINGS */}
           <h3 style={sectionHeadingStyle}>Rate Your Experience</h3>
 
           {ratingFields.map(([name, label]) => (
@@ -480,7 +469,6 @@ function Feedback() {
             </div>
           ))}
 
-          {/* VIDEO */}
           <label style={labelStyle}>
             <Video size={17} />
             Upload Experience Video (Optional)
@@ -503,7 +491,6 @@ function Feedback() {
             </p>
           )}
 
-          {/* REVIEW */}
           <label style={labelStyle}>Your Written Feedback *</label>
 
           <textarea
@@ -517,15 +504,14 @@ function Feedback() {
           />
 
           <button
-  type="submit"
-  disabled={false}
-  onClick={() => console.log('SUBMIT BUTTON CLICKED')}
-  style={{
-    ...submitButtonStyle,
-    cursor: 'pointer',
-    opacity: 1
-  }}
->
+            type="submit"
+            disabled={loading}
+            style={{
+              ...submitButtonStyle,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
             <Send size={17} />
             {loading ? 'Submitting...' : 'Submit Feedback'}
           </button>
