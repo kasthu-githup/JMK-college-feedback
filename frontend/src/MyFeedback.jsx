@@ -33,11 +33,13 @@ function MyFeedback() {
           Authorization: `Bearer ${token}`
         };
 
-        const [college, internship, projects] = await Promise.all([
-          axios.get(`${API}/api/feedback/my`, { headers }),
-          axios.get(`${API}/api/internship/my`, { headers }),
-          axios.get(`${API}/api/projects/my`, { headers })
-        ]);
+        
+const [college, internship, projects] = await Promise.all([
+  axios.get(`${API}/feedback/my`, { headers }),
+  axios.get(`${API}/internship/my`, { headers }),
+  axios.get(`${API}/projects/my`, { headers })
+]);
+
 
         const allFeedbacks = [
           ...college.data.map(item => ({
