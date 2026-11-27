@@ -148,12 +148,12 @@ function AdminDashboard() {
   // OPEN EDIT FORM
   const startEdit = (item) => {
     setEditingItem(item);
-
     let values = {};
 
     if (item.category === 'college') {
       values = {
         college_name: item.college_name || item.primary_title || '',
+        school_name: item.school_name || '',
         department: item.department || item.secondary_title || '',
         admission_year: item.admission_year || item.detail_one || '',
         agent_name: item.agent_name || item.detail_two || '',
@@ -247,6 +247,7 @@ function AdminDashboard() {
       item.detail_two,
       item.department,
       item.college_name,
+      item.school_name,
       item.company_name,
       item.project_title,
       item.review

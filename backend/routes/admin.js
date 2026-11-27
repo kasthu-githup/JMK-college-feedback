@@ -80,6 +80,7 @@ router.get('/feedback', verifyAdmin, async (req, res) => {
         s.profile_image,
         s.name AS student_name,
         f.college_name AS primary_title,
+        f.school_name,
         f.department AS secondary_title,
         f.admission_year::text AS detail_one,
         f.agent_name AS detail_two,
@@ -103,6 +104,7 @@ router.get('/feedback', verifyAdmin, async (req, res) => {
         s.profile_image,
         s.name AS student_name,
         f.company_name AS primary_title,
+        NULL::varchar AS school_name,
         f.job_role AS secondary_title,
         f.duration AS detail_one,
         f.stipend AS detail_two,
@@ -126,6 +128,7 @@ router.get('/feedback', verifyAdmin, async (req, res) => {
         s.profile_image,
         s.name AS student_name,
         f.project_title AS primary_title,
+        NULL::varchar AS school_name,
         f.domain AS secondary_title,
         f.technologies AS detail_one,
         f.guide_name AS detail_two,
@@ -310,11 +313,13 @@ router.get('/dashboard', verifyAdmin, async (req, res) => {
 router.put('/feedback/:category/:id', verifyAdmin, async (req, res) => {
   try {
     const { category, id } = req.params;
+
     const allowedFields = {
       college: {
         table: 'feedback',
         fields: [
           'college_name',
+          'school_name',
           'department',
           'admission_year',
           'agent_name',
