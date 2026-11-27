@@ -86,10 +86,12 @@ function Feedback() {
   }, [navigate]);
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handlePhotoChange = (e) => {
@@ -198,7 +200,6 @@ function Feedback() {
         data.append('video', video);
       }
 
-      // Correct API endpoints: API already contains /api
       const endpoint = category === 'college'
         ? '/feedback'
         : category === 'internship'
@@ -263,7 +264,9 @@ function Feedback() {
           <CheckCircle size={48} color="#159E9D" />
           <h2 style={{ color: '#174F80' }}>Thank You!</h2>
           <p>Your feedback has been submitted successfully.</p>
-          <p style={{ color: '#159E9D' }}>Redirecting to Home Page...</p>
+          <p style={{ color: '#159E9D' }}>
+            Redirecting to Home Page...
+          </p>
         </div>
       )}
 
@@ -291,7 +294,8 @@ function Feedback() {
           {category === 'college' && (
             <>
               <label style={labelStyle}>
-                <Camera size={17} /> Upload Student Photo
+                <Camera size={17} />
+                Upload Student Photo
               </label>
 
               <input
@@ -303,7 +307,11 @@ function Feedback() {
 
               {selectedImage && (
                 <div style={previewStyle}>
-                  <img src={selectedImage} alt="Student" style={photoStyle} />
+                  <img
+                    src={selectedImage}
+                    alt="Student"
+                    style={photoStyle}
+                  />
                   <span>Photo Preview</span>
                 </div>
               )}

@@ -68,6 +68,7 @@ router.post(
     try {
       const {
         college_name,
+        school_name,
         department,
         admission_year,
         agent_name,
@@ -81,6 +82,7 @@ router.post(
 
       if (
         !college_name ||
+        !school_name ||
         !department ||
         !admission_year ||
         !agent_name ||
@@ -156,6 +158,7 @@ router.post(
         `INSERT INTO feedback (
           student_id,
           college_name,
+          school_name,
           department,
           admission_year,
           agent_name,
@@ -166,11 +169,12 @@ router.post(
           review,
           video_url
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
         RETURNING *`,
         [
           req.student.id,
           college_name.trim(),
+          school_name.trim(),
           department.trim(),
           Number(admission_year),
           agent_name.trim(),
@@ -196,7 +200,6 @@ router.post(
         await client.query('ROLLBACK');
       }
 
-      // REMOVE CLOUDINARY VIDEO IF DATABASE SAVE FAILED
       if (uploadedVideo) {
         try {
           await cloudinary.uploader.destroy(uploadedVideo.public_id, {
@@ -251,6 +254,7 @@ router.get('/approved', async (req, res) => {
         s.profile_image,
         s.name AS student_name,
         f.college_name,
+        f.school_name,
         f.department,
         f.admission_year,
         f.agent_name,

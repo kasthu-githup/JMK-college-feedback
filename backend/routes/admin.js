@@ -306,4 +306,122 @@ router.get('/dashboard', verifyAdmin, async (req, res) => {
   }
 });
 
+// EDIT FEEDBACK - ADMIN ONLY
+router.put('/feedback/:category/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { category, id } = req.params;
+    const allowedFields = {
+      college: {
+        table: 'feedback',
+        fields: [
+          'college_name',
+          'department',
+          'admission_year',
+          'agent_name',
+          'guidance_rating',
+          'communication_rating',
+          'support_rating',
+          'overall_rating',
+          'review'
+        ]
+      },
+      internship: {
+        table: 'internship_feedback',
+        fields: [
+          'company_name',
+          'job_role',
+          'duration',
+          'stipend',
+          'overall_rating',
+          'review'
+        ]
+      },
+      project: {
+        table: 'project_feedback',
+        fields: [
+          'project_title',
+          'domain',
+          'technologies',
+          'guide_name',
+          'overall_rating',
+          'review'
+        ]
+      }
+    };
+
+    const config = allowedFields[category];
+
+    if (!config) {
+      return res.status(400).json({
+        message: 'Invalid feedback category'
+      });
+    }
+
+    const entries = Object.entries(req.body).filter(
+      ([key, value]) =>
+        config.fields.includes(key) && value !== undefined
+    );
+
+    if (entries.length === 0) {
+      return res.status(400).json({
+        message: 'No valid fields provided'
+      });
+    }
+
+    const ratingFields = [
+      'guidance_rating',
+      'communication_rating',
+      'support_rating',
+      'overall_rating'
+    ];
+
+    for (const [key, value] of entries) {
+      if (
+        ratingFields.includes(key) &&
+        (!Number.isInteger(Number(value)) ||
+          Number(value) < 1 ||
+          Number(value) > 5)
+      ) {
+        return res.status(400).json({
+          message: `${key} must be between 1 and 5`
+        });
+      }
+    }
+
+    const values = entries.map(([key, value]) =>
+      ratingFields.includes(key) ? Number(value) : value
+    );
+
+    const setClause = entries
+      .map(([key], index) => `"${key}" = $${index + 1}`)
+      .join(', ');
+
+    const result = await pool.query(
+      `UPDATE ${config.table}
+       SET ${setClause}
+       WHERE id = $${values.length + 1}
+       RETURNING id`,
+      [...values, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: 'Feedback not found'
+      });
+    }
+
+    res.json({
+      message: 'Feedback updated successfully',
+      id: result.rows[0].id,
+      category
+    });
+
+  } catch (error) {
+    console.error('Edit Feedback Error:', error.message);
+    res.status(500).json({
+      message: 'Unable to update feedback'
+    });
+  }
+});
+
 module.exports = router;
