@@ -19,55 +19,53 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    const fetchAllFeedback = async () => {
+      try {
+        const results = await Promise.allSettled([
+          axios.get(`${API}/feedback/approved`),
+          axios.get(`${API}/internship/public`),
+          axios.get(`${API}/projects/public`)
+        ]);
 
-useEffect(() => {
-  const fetchAllFeedback = async () => {
-    try {
-      const results = await Promise.allSettled([
-        axios.get(`${API}/feedback/approved`),
-        axios.get(`${API}/internship/public`),
-        axios.get(`${API}/projects/public`)
-      ]);
+        if (results[0].status === 'fulfilled') {
+          setCollegeFeedbacks(results[0].value.data);
+        } else {
+          console.error('College feedback error:', results[0].reason);
+        }
 
-      if (results[0].status === 'fulfilled') {
-        setCollegeFeedbacks(results[0].value.data);
-      } else {
-        console.error('College feedback error:', results[0].reason);
+        if (results[1].status === 'fulfilled') {
+          setInternshipFeedbacks(results[1].value.data);
+        } else {
+          console.error('Internship feedback error:', results[1].reason);
+        }
+
+        if (results[2].status === 'fulfilled') {
+          setProjectFeedbacks(results[2].value.data);
+        } else {
+          console.error('Project feedback error:', results[2].reason);
+        }
+
+        const allFailed = results.every(
+          result => result.status === 'rejected'
+        );
+
+        setError(
+          allFailed
+            ? 'Unable to load feedback. Please try again later.'
+            : ''
+        );
+
+      } catch (err) {
+        console.error('Feedback loading error:', err);
+        setError('Unable to load feedback. Please try again later.');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (results[1].status === 'fulfilled') {
-        setInternshipFeedbacks(results[1].value.data);
-      } else {
-        console.error('Internship feedback error:', results[1].reason);
-      }
-
-      if (results[2].status === 'fulfilled') {
-        setProjectFeedbacks(results[2].value.data);
-      } else {
-        console.error('Project feedback error:', results[2].reason);
-      }
-
-      const allFailed = results.every(
-        result => result.status === 'rejected'
-      );
-
-      setError(
-        allFailed
-          ? 'Unable to load feedback. Please try again later.'
-          : ''
-      );
-
-    } catch (err) {
-      console.error('Feedback loading error:', err);
-      setError('Unable to load feedback. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchAllFeedback();
-}, []);
-
+    fetchAllFeedback();
+  }, []);
 
   const allFeedbacks = [
     ...collegeFeedbacks,
@@ -344,12 +342,12 @@ useEffect(() => {
             ) : error ? (
               <div className="empty-state">{error}</div>
             ) : filterItems(collegeFeedbacks, [
-              'college_name', 'department', 'agent_name'
+              'college_name', 'school_name', 'department', 'agent_name'
             ]).length === 0 ? (
               renderEmpty('No College Feedback Yet')
             ) : (
               filterItems(collegeFeedbacks, [
-                'college_name', 'department', 'agent_name'
+                'college_name', 'school_name', 'department', 'agent_name'
               ]).map(item => (
                 <div className="review-card" key={item.id}>
                   {item.profile_image ? (
@@ -362,9 +360,14 @@ useEffect(() => {
 
                   <h3>{item.student_name}</h3>
                   <p>{item.college_name}</p>
+                  <p>
+                    <strong>School Name:</strong>{' '}
+                    {item.school_name || 'Not specified'}
+                  </p>
                   <p><strong>Department:</strong> {item.department}</p>
                   <p><strong>Admission Year:</strong> {item.admission_year}</p>
                   <p><strong>Agent:</strong> {item.agent_name}</p>
+
                   {renderRating(item.overall_rating)}
                   <p>{item.review}</p>
 
@@ -410,6 +413,7 @@ useEffect(() => {
                   <p><strong>Role:</strong> {item.job_role || 'Not specified'}</p>
                   <p><strong>Duration:</strong> {item.duration || 'Not specified'}</p>
                   <p><strong>Stipend:</strong> {item.stipend || 'Not specified'}</p>
+
                   {renderRating(item.overall_rating)}
                   <p>{item.review}</p>
 
@@ -455,6 +459,7 @@ useEffect(() => {
                   <p><strong>Domain:</strong> {item.domain || 'Not specified'}</p>
                   <p><strong>Technologies:</strong> {item.technologies || 'Not specified'}</p>
                   <p><strong>Guide:</strong> {item.guide_name || 'Not specified'}</p>
+
                   {renderRating(item.overall_rating)}
                   <p>{item.review}</p>
 
